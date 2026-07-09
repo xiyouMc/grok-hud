@@ -7,6 +7,7 @@ Grok does not expose a Claude-style native statusline API, so **grok-hud** reads
 ```
 [Grok 4.5] │ CoachFlow git:(main*) │ admin split optimization… │ ● live
 Context ████░░░░░░ 37% (190k/500k) │ Time 1h 17m │ Turns 9 │ Tools 140
+Usage █░░░░░░░░░ 7% (weekly · resets 6d)
 ◐ run_terminal_command ls -la … | ✓ read_file ×3 | ✓ grep ×2
 ```
 
@@ -100,6 +101,7 @@ set -g status-right '#(grok-hud --tmux) | %H:%M'
 | Model | `signals.json` / `summary.json` |
 | Project path + git branch | session cwd + `git` |
 | Context bar % / tokens | `signals.contextWindowUsage`, `contextTokensUsed`, `contextWindowTokens` |
+| Usage bar (weekly credits) | Grok billing API `GET /v1/billing?format=credits` (auth from `~/.grok/auth.json`), cached ~60s |
 | Duration, turns, tool count | `signals.json` |
 | Recent tools | tail of `updates.jsonl` |
 | Live / stale | `active_sessions.json` + process PID |
@@ -129,11 +131,16 @@ Useful keys:
   "display": {
     "showContextBar": true,
     "contextValue": "both",
+    "showUsage": true,
+    "usageBarEnabled": true,
     "showTools": true,
     "showDuration": true,
     "showTurns": true,
     "warningThreshold": 70,
     "criticalThreshold": 90
+  },
+  "usage": {
+    "cacheTtlMs": 60000
   },
   "gitStatus": {
     "enabled": true,
@@ -144,8 +151,8 @@ Useful keys:
 
 `language`: `"en"` | `"zh"`  
 `lineLayout`: `"expanded"` | `"compact"`  
-`contextValue`: `"percent"` | `"tokens"` | `"remaining"` | `"both"`
-
+`contextValue`: `"percent"` | `"tokens"` | `"remaining"` | `"both"`  
+`display.showUsage`: weekly credit bar from Grok billing API (disable to stay offline-only)
 ## How it works
 
 ```

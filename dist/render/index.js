@@ -1,6 +1,7 @@
 import { t } from '../i18n/index.js';
 import { bar, colorByPercent, critical, dim, git, gitBranch, green, label, model, project, red, stats, tools as toolsColor, warning, yellow, stripAnsi, } from './colors.js';
 import { formatDuration, formatMs, formatTokens, projectPath, shortModel, shortSessionId, } from './format.js';
+import { formatResetCountdown } from '../billing.js';
 function sep(parts, divider = ' │ ') {
     return parts.filter(Boolean).join(divider);
 }
@@ -136,6 +137,38 @@ function renderContextLine(snap, ctx) {
     }
     return sep(parts);
 }
+function renderUsageLine(ctx) {
+    const display = ctx.config.display;
+    if (display.showUsage === false)
+        return null;
+    const usage = ctx.creditUsage;
+    if (!usage)
+        return null;
+    const threshold = display.usageThreshold ?? 0;
+    if (usage.percent < threshold)
+        return null;
+    const colors = ctx.config.colors;
+    const warn = display.warningThreshold;
+    const crit = display.criticalThreshold;
+    const usageLabel = label(t('label.usage'), colors);
+    if (usage.percent >= 100) {
+        const reset = formatResetCountdown(usage.periodEnd, ctx.now);
+        const resetPart = reset ? ` (${t('label.resets')} ${reset})` : '';
+        return `${usageLabel} ${critical(`⚠ ${t('status.limitReached')}${resetPart}`, colors)}`;
+    }
+    const periodLabel = usage.periodType === 'weekly'
+        ? t('label.weekly')
+        : usage.periodType === 'monthly'
+            ? t('label.monthly')
+            : '';
+    const barEnabled = display.usageBarEnabled !== false;
+    const barStr = barEnabled ? ` ${bar(usage.percent, 10, colors, warn, crit)}` : '';
+    const pctStr = colorByPercent(`${Math.round(usage.percent)}%`, usage.percent, colors, warn, crit);
+    const periodPart = periodLabel ? ` ${dim(`(${periodLabel})`)}` : '';
+    const reset = formatResetCountdown(usage.periodEnd, ctx.now);
+    const resetPart = reset ? dim(` · ${t('label.resets')} ${reset}`) : '';
+    return `${usageLabel}${barStr} ${pctStr}${periodPart}${resetPart}`;
+}
 function renderToolsLine(snap, ctx) {
     if (!ctx.config.display.showTools)
         return null;
@@ -172,11 +205,15 @@ function renderSessionBlock(snap, ctx) {
     const lines = [];
     if (ctx.config.lineLayout === 'compact') {
         const id = dim(shortSessionId(snap.sessionId));
-        lines.push(sep([renderIdentityLine(snap, ctx), renderContextLine(snap, ctx), id], '  '));
+        const usage = renderUsageLine(ctx);
+        lines.push(sep([renderIdentityLine(snap, ctx), renderContextLine(snap, ctx), usage ?? '', id].filter(Boolean), '  '));
         return lines;
     }
     lines.push(renderIdentityLine(snap, ctx));
     lines.push(renderContextLine(snap, ctx));
+    const usageLine = renderUsageLine(ctx);
+    if (usageLine)
+        lines.push(usageLine);
     const toolsLine = renderToolsLine(snap, ctx);
     if (toolsLine)
         lines.push(toolsLine);
@@ -216,7 +253,10 @@ export function renderTmux(ctx, color = true) {
         ? ` ${snap.gitStatus.branch}${snap.gitStatus.isDirty ? '*' : ''}`
         : '';
     const live = snap.live ? '●' : '○';
-    const plain = `grok [${shortModel(modelId)}] ${projectName}${branch} ctx ${pct}% ${formatTokens(used)}${total ? '/' + formatTokens(total) : ''} ${live}`;
+    const usagePct = ctx.creditUsage && ctx.config.display.showUsage !== false
+        ? Math.round(ctx.creditUsage.percent)
+        : null;
+    const plain = `grok [${shortModel(modelId)}] ${projectName}${branch} ctx ${pct}% ${formatTokens(used)}${total ? '/' + formatTokens(total) : ''}${usagePct !== null ? ` use ${usagePct}%` : ''} ${live}`;
     if (!color)
         return plain;
     const colored = sep([
@@ -224,13 +264,17 @@ export function renderTmux(ctx, color = true) {
         project(projectName, ctx.config.colors) +
             (branch ? ` ${gitBranch(branch.trim(), ctx.config.colors)}` : ''),
         `${label('ctx', ctx.config.colors)} ${colorByPercent(`${pct}%`, pct, ctx.config.colors, ctx.config.display.warningThreshold, ctx.config.display.criticalThreshold)}`,
+        usagePct !== null
+            ? `${label('use', ctx.config.colors)} ${colorByPercent(`${usagePct}%`, usagePct, ctx.config.colors, ctx.config.display.warningThreshold, ctx.config.display.criticalThreshold)}`
+            : '',
         snap.live ? green('●') : dim('○'),
-    ], ' ');
+    ].filter(Boolean), ' ');
     return colored;
 }
 export function renderJson(ctx) {
     const payload = {
         generatedAt: new Date(ctx.now).toISOString(),
+        creditUsage: ctx.creditUsage,
         sessions: ctx.sessions.map((s) => ({
             sessionId: s.sessionId,
             cwd: s.cwd,

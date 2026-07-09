@@ -1,6 +1,6 @@
 {
   "name": "grok-hud",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Real-time status HUD for Grok — context usage, git branch, and recent tool activity (inspired by claude-hud).",
   "author": {
     "name": "xiyouMc",

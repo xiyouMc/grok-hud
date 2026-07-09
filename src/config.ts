@@ -47,6 +47,9 @@ export interface HudConfig {
     showProject: boolean;
     showContextBar: boolean;
     contextValue: ContextValueMode;
+    showUsage: boolean;
+    usageBarEnabled: boolean;
+    usageThreshold: number;
     showDuration: boolean;
     showTurns: boolean;
     showToolCount: boolean;
@@ -59,6 +62,10 @@ export interface HudConfig {
     maxTools: number;
     warningThreshold: number;
     criticalThreshold: number;
+  };
+  usage: {
+    /** Cache TTL for billing API (ms). Avoid hammering the network in --watch. */
+    cacheTtlMs: number;
   };
   colors: HudColorOverrides;
 }
@@ -79,6 +86,9 @@ export const DEFAULT_CONFIG: HudConfig = {
     showProject: true,
     showContextBar: true,
     contextValue: 'both',
+    showUsage: true,
+    usageBarEnabled: true,
+    usageThreshold: 0,
     showDuration: true,
     showTurns: true,
     showToolCount: true,
@@ -91,6 +101,9 @@ export const DEFAULT_CONFIG: HudConfig = {
     maxTools: 5,
     warningThreshold: 70,
     criticalThreshold: 90,
+  },
+  usage: {
+    cacheTtlMs: 60_000,
   },
   colors: {
     context: 'green',

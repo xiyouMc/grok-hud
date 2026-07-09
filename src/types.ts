@@ -1,5 +1,6 @@
 import type { HudConfig } from './config.js';
 import type { GitStatus } from './git.js';
+import type { CreditUsage } from './billing.js';
 
 /** Subset of ~/.grok/active_sessions.json entries */
 export interface ActiveSession {
@@ -84,4 +85,5 @@ export interface RenderContext {
   focus: SessionSnapshot | null;
   config: HudConfig;
   now: number;
+  creditUsage: CreditUsage | null;
 }

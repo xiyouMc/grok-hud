@@ -3,6 +3,9 @@ import type { MessageKey } from './en.js';
 export const zh: Record<MessageKey, string> = {
   'label.context': '上下文',
   'label.usage': '用量',
+  'label.weekly': '周',
+  'label.monthly': '月',
+  'label.resets': '重置',
   'label.tools': '工具',
   'label.turns': '轮次',
   'label.duration': '时长',
@@ -17,6 +20,7 @@ export const zh: Record<MessageKey, string> = {
   'status.completed': '完成',
   'status.error': '失败',
   'status.pending': '等待',
+  'status.limitReached': '额度已满',
   'init.banner': 'grok-hud — Grok 实时状态栏（参考 claude-hud）',
   'init.help': '试试: grok-hud --watch   或   grok-hud --tmux',
 };

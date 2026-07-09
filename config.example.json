@@ -13,6 +13,9 @@
     "showProject": true,
     "showContextBar": true,
     "contextValue": "both",
+    "showUsage": true,
+    "usageBarEnabled": true,
+    "usageThreshold": 0,
     "showDuration": true,
     "showTurns": true,
     "showToolCount": true,
@@ -25,6 +28,9 @@
     "maxTools": 5,
     "warningThreshold": 70,
     "criticalThreshold": 90
+  },
+  "usage": {
+    "cacheTtlMs": 60000
   },
   "colors": {
     "context": "green",

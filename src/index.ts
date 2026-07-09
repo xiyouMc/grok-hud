@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { loadConfig, defaultConfigPath, type HudConfig } from './config.js';
 import { collectSnapshots } from './session.js';
+import { getCreditUsage } from './billing.js';
 import { setLanguage, t } from './i18n/index.js';
 import { render, renderJson, renderTmux, lineCount } from './render/index.js';
 import type { RenderContext } from './types.js';
@@ -131,11 +132,14 @@ Examples:
   grok-hud --tmux              # for tmux status-right
   grok-hud --json | jq         # script integration
 
-Data sources (read-only):
+Data sources:
   ~/.grok/active_sessions.json
   ~/.grok/sessions/<cwd>/<id>/signals.json
   ~/.grok/sessions/<cwd>/<id>/summary.json
   ~/.grok/sessions/<cwd>/<id>/updates.jsonl
+  Grok billing API (weekly credits; cached ~60s):
+    GET https://cli-chat-proxy.grok.com/v1/billing?format=credits
+    auth: ~/.grok/auth.json
 
 Config:
   ${defaultConfigPath()}
@@ -153,7 +157,7 @@ function writeDefaultConfig(config: HudConfig): string {
 }
 
 async function buildContext(config: HudConfig, opts: CliOptions): Promise<RenderContext> {
-  const sessions = await collectSnapshots({
+  const sessionsPromise = collectSnapshots({
     grokHome: config.grokHome,
     cwdFilter: opts.cwd ? path.resolve(opts.cwd) : undefined,
     sessionId: opts.session,
@@ -161,6 +165,16 @@ async function buildContext(config: HudConfig, opts: CliOptions): Promise<Render
     maxTools: config.display.maxTools,
     includeInactive: true,
   });
+
+  const creditPromise =
+    config.display.showUsage === false
+      ? Promise.resolve(null)
+      : getCreditUsage({
+          grokHome: config.grokHome,
+          ttlMs: config.usage?.cacheTtlMs ?? 60_000,
+        });
+
+  const [sessions, creditUsage] = await Promise.all([sessionsPromise, creditPromise]);
 
   // Prefer session matching process cwd when not specified
   let focus = sessions[0] ?? null;
@@ -183,6 +197,7 @@ async function buildContext(config: HudConfig, opts: CliOptions): Promise<Render
     focus,
     config: cfg,
     now: Date.now(),
+    creditUsage,
   };
 }
 
@@ -289,7 +304,7 @@ async function main(): Promise<void> {
   }
 
   if (opts.version) {
-    console.log('0.1.0');
+    console.log('0.1.1');
     return;
   }
 

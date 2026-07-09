@@ -17,6 +17,9 @@ export const DEFAULT_CONFIG = {
         showProject: true,
         showContextBar: true,
         contextValue: 'both',
+        showUsage: true,
+        usageBarEnabled: true,
+        usageThreshold: 0,
         showDuration: true,
         showTurns: true,
         showToolCount: true,
@@ -29,6 +32,9 @@ export const DEFAULT_CONFIG = {
         maxTools: 5,
         warningThreshold: 70,
         criticalThreshold: 90,
+    },
+    usage: {
+        cacheTtlMs: 60_000,
     },
     colors: {
         context: 'green',

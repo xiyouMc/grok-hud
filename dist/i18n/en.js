@@ -1,6 +1,9 @@
 export const en = {
     'label.context': 'Context',
     'label.usage': 'Usage',
+    'label.weekly': 'weekly',
+    'label.monthly': 'monthly',
+    'label.resets': 'resets',
     'label.tools': 'Tools',
     'label.turns': 'Turns',
     'label.duration': 'Time',
@@ -15,6 +18,7 @@ export const en = {
     'status.completed': 'done',
     'status.error': 'error',
     'status.pending': 'pending',
+    'status.limitReached': 'limit reached',
     'init.banner': 'grok-hud — real-time HUD for Grok (inspired by claude-hud)',
     'init.help': 'Try: grok-hud --watch   or   grok-hud --tmux',
 };

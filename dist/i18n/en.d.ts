@@ -1,6 +1,9 @@
 export declare const en: {
     readonly 'label.context': "Context";
     readonly 'label.usage': "Usage";
+    readonly 'label.weekly': "weekly";
+    readonly 'label.monthly': "monthly";
+    readonly 'label.resets': "resets";
     readonly 'label.tools': "Tools";
     readonly 'label.turns': "Turns";
     readonly 'label.duration': "Time";
@@ -15,6 +18,7 @@ export declare const en: {
     readonly 'status.completed': "done";
     readonly 'status.error': "error";
     readonly 'status.pending': "pending";
+    readonly 'status.limitReached': "limit reached";
     readonly 'init.banner': "grok-hud — real-time HUD for Grok (inspired by claude-hud)";
     readonly 'init.help': "Try: grok-hud --watch   or   grok-hud --tmux";
 };
