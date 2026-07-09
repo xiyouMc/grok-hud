@@ -153,6 +153,7 @@ Useful keys:
 `lineLayout`: `"expanded"` | `"compact"`  
 `contextValue`: `"percent"` | `"tokens"` | `"remaining"` | `"both"`  
 `display.showUsage`: weekly credit bar from Grok billing API (disable to stay offline-only)
+
 ## How it works
 
 ```
