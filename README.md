@@ -10,22 +10,54 @@ Grok does not expose a Claude-style native statusline API, so **grok-hud** reads
 ◐ run_terminal_command ls -la … | ✓ read_file ×3 | ✓ grep ×2
 ```
 
-## Install
+## Install as a Grok plugin (recommended)
 
 ```bash
-cd /path/to/grok-hud
+# from GitHub
+grok plugin install xiyouMc/grok-hud --trust
+grok plugin enable grok-hud
+
+# or from a local clone
+grok plugin install /path/to/grok-hud --trust
+grok plugin enable grok-hud
+```
+
+Then in a Grok session:
+
+| Slash command | Purpose |
+|---------------|---------|
+| `/grok-hud:setup` | `npm install` + build + write config (+ optional `npm link`) |
+| `/grok-hud:status` | One-shot HUD snapshot |
+| `/grok-hud:watch` | Instructions for a live pane / tmux |
+| `/grok-hud:configure` | Edit display options |
+
+Also installs a **skill** (`grok-hud`) so the agent knows how to help with context/HUD questions.
+
+Validate the package:
+
+```bash
+grok plugin validate .
+```
+
+### CLI only (without plugin registry)
+
+```bash
+git clone git@github.com:xiyouMc/grok-hud.git
+cd grok-hud
 npm install
 npm run build
 npm link          # optional: puts `grok-hud` on PATH
 ```
 
-Or run directly:
+Or run the shipped binary:
 
 ```bash
 node bin/grok-hud.js --watch
 ```
 
 ## Usage
+
+### CLI
 
 | Command | What it does |
 |---------|----------------|

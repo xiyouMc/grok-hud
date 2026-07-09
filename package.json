@@ -10,6 +10,11 @@
   "files": [
     "dist/",
     "bin/",
+    "commands/",
+    "skills/",
+    "plugin.json",
+    ".grok-plugin/",
+    "config.example.json",
     "README.md"
   ],
   "scripts": {
@@ -18,14 +23,16 @@
     "start": "node dist/index.js",
     "watch": "node dist/index.js --watch",
     "test:once": "node dist/index.js --once",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "plugin:validate": "grok plugin validate ."
   },
   "keywords": [
     "grok",
     "xai",
     "statusline",
     "hud",
-    "cli"
+    "cli",
+    "plugin"
   ],
   "author": "xiyoumc",
   "license": "MIT",

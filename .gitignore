@@ -1,5 +1,6 @@
 node_modules/
-dist/
 *.log
 .DS_Store
 config.local.json
+# Ship dist/ so `grok plugin install` works without a local TypeScript build.
+# Rebuild with `npm run build` when changing src/.

@@ -1,0 +1,21 @@
+{
+  "name": "grok-hud",
+  "version": "0.1.0",
+  "description": "Real-time status HUD for Grok — context usage, git branch, and recent tool activity (inspired by claude-hud).",
+  "author": {
+    "name": "xiyouMc",
+    "url": "https://github.com/xiyouMc"
+  },
+  "homepage": "https://github.com/xiyouMc/grok-hud",
+  "repository": "https://github.com/xiyouMc/grok-hud",
+  "license": "MIT",
+  "keywords": [
+    "hud",
+    "statusline",
+    "context",
+    "usage",
+    "tokens",
+    "monitoring",
+    "tmux"
+  ]
+}
