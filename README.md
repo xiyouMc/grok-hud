@@ -5,8 +5,8 @@ Real-time statusline HUD for **Grok** (xAI CLI), inspired by [claude-hud](https:
 Grok does not expose a Claude-style native statusline API, so **grok-hud** reads live session files under `~/.grok/` and renders a terminal HUD (watch mode, one-shot, or tmux line).
 
 ```
-[Grok 4.5] │ CoachFlow git:(main*) │ 体优化执行… │ ● 活跃
-上下文 ████░░░░░░ 37% (190k/500k) │ 时长 1h 17m │ 轮次 9 │ 工具 140
+[Grok 4.5] │ CoachFlow git:(main*) │ admin split optimization… │ ● live
+Context ████░░░░░░ 37% (190k/500k) │ Time 1h 17m │ Turns 9 │ Tools 140
 ◐ run_terminal_command ls -la … | ✓ read_file ×3 | ✓ grep ×2
 ```
 
@@ -122,7 +122,7 @@ Useful keys:
 
 ```json
 {
-  "language": "zh",
+  "language": "en",
   "lineLayout": "expanded",
   "pathLevels": 2,
   "refreshMs": 1000,
@@ -142,7 +142,7 @@ Useful keys:
 }
 ```
 
-`language`: `"zh"` | `"en"`  
+`language`: `"en"` | `"zh"`  
 `lineLayout`: `"expanded"` | `"compact"`  
 `contextValue`: `"percent"` | `"tokens"` | `"remaining"` | `"both"`
 
