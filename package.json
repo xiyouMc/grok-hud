@@ -1,0 +1,39 @@
+{
+  "name": "grok-hud",
+  "version": "0.1.0",
+  "description": "Real-time statusline HUD for Grok (xAI CLI) — inspired by claude-hud",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "grok-hud": "bin/grok-hud.js"
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "watch": "node dist/index.js --watch",
+    "test:once": "node dist/index.js --once",
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "grok",
+    "xai",
+    "statusline",
+    "hud",
+    "cli"
+  ],
+  "author": "xiyoumc",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.0"
+  }
+}

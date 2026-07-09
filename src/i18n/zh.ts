@@ -1,0 +1,22 @@
+import type { MessageKey } from './en.js';
+
+export const zh: Record<MessageKey, string> = {
+  'label.context': '上下文',
+  'label.usage': '用量',
+  'label.tools': '工具',
+  'label.turns': '轮次',
+  'label.duration': '时长',
+  'label.latency': '首字',
+  'label.lines': '改动',
+  'label.session': '会话',
+  'label.live': '活跃',
+  'label.stale': '离线',
+  'label.noSessions': '未找到 Grok 会话',
+  'label.inactiveHint': '先启动 grok，或传入 --cwd / --session',
+  'status.running': '运行中',
+  'status.completed': '完成',
+  'status.error': '失败',
+  'status.pending': '等待',
+  'init.banner': 'grok-hud — Grok 实时状态栏（参考 claude-hud）',
+  'init.help': '试试: grok-hud --watch   或   grok-hud --tmux',
+};

@@ -1,0 +1,41 @@
+{
+  "language": "zh",
+  "lineLayout": "expanded",
+  "pathLevels": 2,
+  "refreshMs": 1000,
+  "gitStatus": {
+    "enabled": true,
+    "showDirty": true,
+    "showAheadBehind": false
+  },
+  "display": {
+    "showModel": true,
+    "showProject": true,
+    "showContextBar": true,
+    "contextValue": "both",
+    "showDuration": true,
+    "showTurns": true,
+    "showToolCount": true,
+    "showTools": true,
+    "showLatency": false,
+    "showLines": false,
+    "showSessionTitle": true,
+    "showPid": false,
+    "showAllSessions": false,
+    "maxTools": 5,
+    "warningThreshold": 70,
+    "criticalThreshold": 90
+  },
+  "colors": {
+    "context": "green",
+    "warning": "yellow",
+    "critical": "red",
+    "model": "cyan",
+    "project": "yellow",
+    "git": "magenta",
+    "gitBranch": "cyan",
+    "label": "dim",
+    "tools": "brightBlue",
+    "stats": "dim"
+  }
+}
