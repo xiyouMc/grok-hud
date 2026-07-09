@@ -4,10 +4,10 @@ import type { Language } from '../config.js';
 
 const catalogs: Record<Language, Record<MessageKey, string>> = { en, zh };
 
-let language: Language = 'zh';
+let language: Language = 'en';
 
 export function setLanguage(lang: Language): void {
-  language = lang === 'en' ? 'en' : 'zh';
+  language = lang === 'zh' ? 'zh' : 'en';
 }
 
 export function t(key: MessageKey): string {
