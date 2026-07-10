@@ -387,3 +387,52 @@ export function renderJson(ctx: RenderContext): string {
 export function lineCount(text: string): number {
   return stripAnsi(text).split('\n').length;
 }
+
+/** Approximate terminal rows used by text (accounts for line wrap). */
+export function visualRowCount(text: string, columns?: number | null): number {
+  const cols =
+    typeof columns === 'number' && Number.isFinite(columns) && columns > 0
+      ? Math.floor(columns)
+      : process.stdout?.columns && process.stdout.columns > 0
+        ? process.stdout.columns
+        : process.stderr?.columns && process.stderr.columns > 0
+          ? process.stderr.columns
+          : 80;
+
+  let rows = 0;
+  for (const line of text.split('\n')) {
+    // Wide glyphs (emoji, CJK) roughly as width 2 — good enough for HUD layout.
+    let width = 0;
+    const plain = stripAnsi(line);
+    for (const ch of plain) {
+      const code = ch.codePointAt(0) ?? 0;
+      if (code <= 0x1f || (code >= 0x7f && code <= 0x9f)) {
+        // control
+        continue;
+      }
+      // Rough East Asian / emoji width
+      if (
+        code >= 0x1100 &&
+        (code <= 0x115f ||
+          code === 0x2329 ||
+          code === 0x232a ||
+          (code >= 0x2e80 && code <= 0xa4cf) ||
+          (code >= 0xac00 && code <= 0xd7a3) ||
+          (code >= 0xf900 && code <= 0xfaff) ||
+          (code >= 0xfe10 && code <= 0xfe19) ||
+          (code >= 0xfe30 && code <= 0xfe6f) ||
+          (code >= 0xff00 && code <= 0xff60) ||
+          (code >= 0xffe0 && code <= 0xffe6) ||
+          (code >= 0x1f300 && code <= 0x1faff))
+      ) {
+        width += 2;
+      } else {
+        width += 1;
+      }
+    }
+    rows += Math.max(1, Math.ceil(Math.max(width, 1) / cols));
+  }
+  return Math.max(1, rows);
+}
+
+export { stripAnsi };

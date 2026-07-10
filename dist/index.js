@@ -5,7 +5,7 @@ import { loadConfig, defaultConfigPath } from './config.js';
 import { collectSnapshots } from './session.js';
 import { getCreditUsage } from './billing.js';
 import { setLanguage, t } from './i18n/index.js';
-import { render, renderJson, renderTmux, lineCount } from './render/index.js';
+import { render, renderJson, renderTmux, visualRowCount } from './render/index.js';
 function parseArgs(argv) {
     const opts = {
         watch: false,
@@ -195,8 +195,36 @@ async function runOnce(config, opts) {
 }
 async function runWatch(config, opts) {
     const interval = opts.refreshMs ?? config.refreshMs;
-    let lastLines = 0;
+    let prevRows = 0;
+    let inFlight = false;
+    // Always redraw in-place for multi-line watch (even if isTTY is false —
+    // Grok's embedded terminal supports CSI cursor moves + erase).
+    // Use --tmux / --json for single-shot line modes.
+    const useInPlace = !opts.tmux && !opts.json;
+    const writeFrame = (text) => {
+        // Normalize: no trailing newline in body; we always add one final \n
+        const body = text.replace(/\n+$/, '');
+        const cols = process.stdout.columns || process.stderr.columns || 80;
+        const rows = visualRowCount(body, cols);
+        if (!useInPlace) {
+            process.stdout.write(body + '\n\n');
+            return;
+        }
+        // Move to the first row of the previous frame (if any), column 0.
+        // Use CUU (A) + CR — more widely supported than CPL (F).
+        if (prevRows > 0) {
+            process.stdout.write(`\x1b[${prevRows}A\r`);
+        }
+        // Erase from cursor to end of screen so leftover rows (shrink / wrap) vanish.
+        process.stdout.write('\x1b[0J');
+        process.stdout.write(body + '\n');
+        prevRows = rows;
+    };
     const tick = async () => {
+        // Serialize ticks — buildContext can exceed interval (billing/git).
+        if (inFlight)
+            return;
+        inFlight = true;
         try {
             const ctx = await buildContext(config, opts);
             let text;
@@ -209,46 +237,49 @@ async function runWatch(config, opts) {
             else {
                 text = render(ctx);
             }
-            if (process.stdout.isTTY && !opts.tmux && !opts.json) {
-                // Move cursor up and clear previous frame
-                if (lastLines > 0) {
-                    process.stdout.write(`\x1b[${lastLines}A`);
+            if (opts.noColor) {
+                // eslint-disable-next-line no-control-regex
+                text = text.replace(/\x1b\[[0-9;]*m/g, '');
+            }
+            if (opts.json || opts.tmux) {
+                // Single-line / JSON: overwrite one line when possible
+                if (useInPlace && opts.tmux) {
+                    process.stdout.write(`\r\x1b[2K${text}`);
                 }
-                const lines = text.split('\n');
-                for (let i = 0; i < lines.length; i++) {
-                    process.stdout.write(`\x1b[2K${lines[i]}\n`);
+                else {
+                    process.stdout.write(text + '\n');
                 }
-                // Clear leftover lines if frame shrank
-                if (lastLines > lines.length) {
-                    for (let i = 0; i < lastLines - lines.length; i++) {
-                        process.stdout.write('\x1b[2K\n');
-                    }
-                    process.stdout.write(`\x1b[${lastLines - lines.length}A`);
-                }
-                lastLines = Math.max(lineCount(text), lines.length);
             }
             else {
-                // Non-TTY: print with separator
-                process.stdout.write(text + '\n');
+                writeFrame(text);
             }
         }
         catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             process.stderr.write(`[grok-hud] ${msg}\n`);
         }
+        finally {
+            inFlight = false;
+        }
     };
-    // Hide cursor
-    if (process.stdout.isTTY) {
+    // Hide cursor during watch
+    if (useInPlace) {
         process.stdout.write('\x1b[?25l');
-        const restore = () => {
-            process.stdout.write('\x1b[?25h\n');
-            process.exit(0);
-        };
-        process.on('SIGINT', restore);
-        process.on('SIGTERM', restore);
     }
+    const restore = () => {
+        if (useInPlace) {
+            process.stdout.write('\x1b[?25h');
+            // Leave a clean newline so the shell prompt is not glued to the HUD
+            process.stdout.write('\n');
+        }
+        process.exit(0);
+    };
+    process.on('SIGINT', restore);
+    process.on('SIGTERM', restore);
     await tick();
-    setInterval(tick, interval);
+    setInterval(() => {
+        void tick();
+    }, interval);
 }
 async function main() {
     const opts = parseArgs(process.argv.slice(2));
@@ -270,7 +301,7 @@ async function main() {
         return;
     }
     if (opts.version) {
-        console.log('0.1.1');
+        console.log('0.1.2');
         return;
     }
     if (opts.initConfig) {
