@@ -1,7 +1,7 @@
 import { t } from '../i18n/index.js';
 import { bar, colorByPercent, critical, dim, git, gitBranch, green, label, model, project, red, stats, tools as toolsColor, warning, yellow, stripAnsi, } from './colors.js';
 import { formatDuration, formatMs, formatTokens, projectPath, shortModel, shortSessionId, } from './format.js';
-import { formatResetCountdown } from '../billing.js';
+import { formatCreditAmount, formatResetCountdown } from '../billing.js';
 function sep(parts, divider = ' │ ') {
     return parts.filter(Boolean).join(divider);
 }
@@ -163,7 +163,14 @@ function renderUsageLine(ctx) {
             : '';
     const barEnabled = display.usageBarEnabled !== false;
     const barStr = barEnabled ? ` ${bar(usage.percent, 10, colors, warn, crit)}` : '';
-    const pctStr = colorByPercent(`${Math.round(usage.percent)}%`, usage.percent, colors, warn, crit);
+    let value = `${Math.round(usage.percent)}%`;
+    if (usage.metric === 'monthly_absolute' &&
+        typeof usage.used === 'number' &&
+        typeof usage.limit === 'number' &&
+        usage.limit > 0) {
+        value = `${Math.round(usage.percent)}% (${formatCreditAmount(usage.used)}/${formatCreditAmount(usage.limit)})`;
+    }
+    const pctStr = colorByPercent(value, usage.percent, colors, warn, crit);
     const periodPart = periodLabel ? ` ${dim(`(${periodLabel})`)}` : '';
     const reset = formatResetCountdown(usage.periodEnd, ctx.now);
     const resetPart = reset ? dim(` · ${t('label.resets')} ${reset}`) : '';

@@ -26,7 +26,7 @@ import {
   shortModel,
   shortSessionId,
 } from './format.js';
-import { formatResetCountdown } from '../billing.js';
+import { formatCreditAmount, formatResetCountdown } from '../billing.js';
 
 function sep(parts: string[], divider = ' │ '): string {
   return parts.filter(Boolean).join(divider);
@@ -224,7 +224,18 @@ function renderUsageLine(ctx: RenderContext): string | null {
 
   const barEnabled = display.usageBarEnabled !== false;
   const barStr = barEnabled ? ` ${bar(usage.percent, 10, colors, warn, crit)}` : '';
-  const pctStr = colorByPercent(`${Math.round(usage.percent)}%`, usage.percent, colors, warn, crit);
+
+  let value = `${Math.round(usage.percent)}%`;
+  if (
+    usage.metric === 'monthly_absolute' &&
+    typeof usage.used === 'number' &&
+    typeof usage.limit === 'number' &&
+    usage.limit > 0
+  ) {
+    value = `${Math.round(usage.percent)}% (${formatCreditAmount(usage.used)}/${formatCreditAmount(usage.limit)})`;
+  }
+
+  const pctStr = colorByPercent(value, usage.percent, colors, warn, crit);
   const periodPart = periodLabel ? ` ${dim(`(${periodLabel})`)}` : '';
   const reset = formatResetCountdown(usage.periodEnd, ctx.now);
   const resetPart = reset ? dim(` · ${t('label.resets')} ${reset}`) : '';

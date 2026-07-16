@@ -336,7 +336,7 @@ async function main(): Promise<void> {
   }
 
   if (opts.version) {
-    console.log('0.1.2');
+    console.log('0.1.3');
     return;
   }
 

@@ -301,7 +301,7 @@ async function main() {
         return;
     }
     if (opts.version) {
-        console.log('0.1.2');
+        console.log('0.1.3');
         return;
     }
     if (opts.initConfig) {
