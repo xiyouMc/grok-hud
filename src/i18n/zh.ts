@@ -5,6 +5,8 @@ export const zh: Record<MessageKey, string> = {
   'label.usage': '用量',
   'label.weekly': '周',
   'label.monthly': '月',
+  'label.week': '周',
+  'label.weekEnds': '本周结束',
   'label.resets': '重置',
   'label.tools': '工具',
   'label.turns': '轮次',

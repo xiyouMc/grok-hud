@@ -3,11 +3,18 @@ import * as path from 'node:path';
 import * as https from 'node:https';
 
 export interface CreditUsage {
-  /** 0–100 usage percent for the active period */
+  /** 0–100 usage percent for the primary bar */
   percent: number;
+  /** Primary bar period type (what the % refers to) */
   periodType: 'weekly' | 'monthly' | 'unknown';
   periodStart: string | null;
   periodEnd: string | null;
+  /**
+   * Weekly window from format=credits (often still present even when weekly % is gone).
+   * Used to show "week ends / resets" alongside a monthly usage bar.
+   */
+  weekStart?: string | null;
+  weekEnd?: string | null;
   /** Absolute credits when available (usually monthly endpoint) */
   used?: number | null;
   limit?: number | null;
@@ -35,7 +42,7 @@ const MONTHLY_URL = 'https://cli-chat-proxy.grok.com/v1/billing';
 const DEFAULT_TTL_MS = 60_000;
 const FAILURE_TTL_MS = 30_000;
 /** Bump when cache shape / merge logic changes so stale entries are ignored. */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 function readAuthToken(grokHome: string): string | null {
   const authPath = path.join(grokHome, 'auth.json');
@@ -122,23 +129,32 @@ function parseCreditsOnly(body: unknown): Partial<CreditUsage> | null {
   }
 
   const period = (config.currentPeriod ?? {}) as Record<string, unknown>;
+  const periodType = mapPeriodType(typeof period.type === 'string' ? period.type : undefined);
+  const periodStart =
+    (typeof period.start === 'string' && period.start) ||
+    (typeof config.billingPeriodStart === 'string' && config.billingPeriodStart) ||
+    null;
+  const periodEnd =
+    (typeof period.end === 'string' && period.end) ||
+    (typeof config.billingPeriodEnd === 'string' && config.billingPeriodEnd) ||
+    null;
+
   let product: string | null = null;
   if (Array.isArray(config.productUsage) && config.productUsage[0]) {
     const name = (config.productUsage[0] as Record<string, unknown>).product;
     if (typeof name === 'string') product = name;
   }
 
+  const isWeeklyWindow = periodType === 'weekly' || (!!periodStart && !!periodEnd && periodType !== 'monthly');
+
   return {
     percent: percent === null ? undefined : Math.max(0, Math.min(100, percent)),
-    periodType: mapPeriodType(typeof period.type === 'string' ? period.type : undefined),
-    periodStart:
-      (typeof period.start === 'string' && period.start) ||
-      (typeof config.billingPeriodStart === 'string' && config.billingPeriodStart) ||
-      null,
-    periodEnd:
-      (typeof period.end === 'string' && period.end) ||
-      (typeof config.billingPeriodEnd === 'string' && config.billingPeriodEnd) ||
-      null,
+    periodType,
+    periodStart,
+    periodEnd,
+    // Always capture weekly window metadata when present
+    weekStart: isWeeklyWindow ? periodStart : null,
+    weekEnd: isWeeklyWindow ? periodEnd : null,
     product,
     metric: percent !== null ? 'weekly_percent' : undefined,
   };
@@ -170,7 +186,8 @@ function parseMonthlyOnly(body: unknown): Partial<CreditUsage> | null {
 
 /**
  * Prefer weekly percent when API still provides it; otherwise fall back to
- * monthly used/monthlyLimit. Keep weekly period end for reset countdown when present.
+ * monthly used/monthlyLimit. Always keep weekly window metadata when present
+ * so the HUD can show "week ends / resets" next to a monthly bar.
  */
 export function mergeBillingResponses(
   creditsBody: unknown,
@@ -179,13 +196,18 @@ export function mergeBillingResponses(
   const credits = parseCreditsOnly(creditsBody);
   const monthly = parseMonthlyOnly(monthlyBody);
 
+  const weekStart = credits?.weekStart ?? null;
+  const weekEnd = credits?.weekEnd ?? null;
+
   // Best case: weekly percentage still present
   if (credits && typeof credits.percent === 'number') {
     return {
       percent: credits.percent,
       periodType: credits.periodType === 'unknown' ? 'weekly' : (credits.periodType ?? 'weekly'),
-      periodStart: credits.periodStart ?? monthly?.periodStart ?? null,
-      periodEnd: credits.periodEnd ?? monthly?.periodEnd ?? null,
+      periodStart: credits.periodStart ?? weekStart ?? monthly?.periodStart ?? null,
+      periodEnd: credits.periodEnd ?? weekEnd ?? monthly?.periodEnd ?? null,
+      weekStart,
+      weekEnd,
       used: monthly?.used ?? null,
       limit: monthly?.limit ?? null,
       product: credits.product ?? null,
@@ -198,8 +220,10 @@ export function mergeBillingResponses(
     return {
       percent: monthly.percent,
       periodType: 'monthly',
-      periodStart: monthly.periodStart ?? credits?.periodStart ?? null,
-      periodEnd: monthly.periodEnd ?? credits?.periodEnd ?? null,
+      periodStart: monthly.periodStart ?? null,
+      periodEnd: monthly.periodEnd ?? null,
+      weekStart,
+      weekEnd,
       used: monthly.used ?? null,
       limit: monthly.limit ?? null,
       product: credits?.product ?? null,
@@ -219,7 +243,7 @@ function httpsGetJson(url: string, token: string, timeoutMs = 8000): Promise<unk
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
-          'User-Agent': 'grok-hud/0.1.3',
+          'User-Agent': 'grok-hud/0.1.4',
           'x-grok-client-version': '0.2.93',
         },
         timeout: timeoutMs,

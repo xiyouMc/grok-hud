@@ -3,6 +3,8 @@ export const en = {
   'label.usage': 'Usage',
   'label.weekly': 'weekly',
   'label.monthly': 'monthly',
+  'label.week': 'week',
+  'label.weekEnds': 'week ends',
   'label.resets': 'resets',
   'label.tools': 'Tools',
   'label.turns': 'Turns',

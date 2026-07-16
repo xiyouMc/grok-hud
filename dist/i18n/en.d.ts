@@ -3,6 +3,8 @@ export declare const en: {
     readonly 'label.usage': "Usage";
     readonly 'label.weekly': "weekly";
     readonly 'label.monthly': "monthly";
+    readonly 'label.week': "week";
+    readonly 'label.weekEnds': "week ends";
     readonly 'label.resets': "resets";
     readonly 'label.tools': "Tools";
     readonly 'label.turns': "Turns";

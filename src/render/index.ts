@@ -237,10 +237,34 @@ function renderUsageLine(ctx: RenderContext): string | null {
 
   const pctStr = colorByPercent(value, usage.percent, colors, warn, crit);
   const periodPart = periodLabel ? ` ${dim(`(${periodLabel})`)}` : '';
-  const reset = formatResetCountdown(usage.periodEnd, ctx.now);
-  const resetPart = reset ? dim(` · ${t('label.resets')} ${reset}`) : '';
 
-  return `${usageLabel}${barStr} ${pctStr}${periodPart}${resetPart}`;
+  // Primary period reset (matches the bar: weekly % or monthly absolute)
+  const primaryReset = formatResetCountdown(usage.periodEnd, ctx.now);
+  const primaryResetPart =
+    primaryReset && usage.metric === 'weekly_percent'
+      ? dim(` · ${t('label.resets')} ${primaryReset}`)
+      : primaryReset && usage.metric === 'monthly_absolute'
+        ? dim(` · ${t('label.monthly')} ${t('label.resets')} ${primaryReset}`)
+        : primaryReset
+          ? dim(` · ${t('label.resets')} ${primaryReset}`)
+          : '';
+
+  // Weekly window metadata (even when bar is monthly and weekly % is gone)
+  let weekPart = '';
+  if (usage.weekEnd) {
+    // Avoid duplicating when the primary metric is already the weekly period
+    const weekIsPrimary =
+      usage.metric === 'weekly_percent' ||
+      (usage.periodType === 'weekly' && usage.periodEnd === usage.weekEnd);
+    if (!weekIsPrimary) {
+      const weekLeft = formatResetCountdown(usage.weekEnd, ctx.now);
+      if (weekLeft) {
+        weekPart = dim(` · ${t('label.weekEnds')} ${weekLeft}`);
+      }
+    }
+  }
+
+  return `${usageLabel}${barStr} ${pctStr}${periodPart}${primaryResetPart}${weekPart}`;
 }
 
 function renderToolsLine(snap: SessionSnapshot, ctx: RenderContext): string | null {

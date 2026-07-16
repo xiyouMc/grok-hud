@@ -7,7 +7,7 @@ Grok does not expose a Claude-style native statusline API, so **grok-hud** reads
 ```
 [Grok 4.5] │ CoachFlow git:(main*) │ admin split optimization… │ ● live
 Context ████░░░░░░ 37% (190k/500k) │ Time 1h 17m │ Turns 9 │ Tools 140
-Usage ██░░░░░░░░ 25% (3.7k/15k) (monthly) · resets 16d
+Usage ██░░░░░░░░ 25% (3.7k/15k) (monthly) · monthly resets 16d · week ends 6h
 ◐ run_terminal_command ls -la … | ✓ read_file ×3 | ✓ grep ×2
 ```
 
@@ -101,7 +101,7 @@ set -g status-right '#(grok-hud --tmux) | %H:%M'
 | Model | `signals.json` / `summary.json` |
 | Project path + git branch | session cwd + `git` |
 | Context bar % / tokens | `signals.contextWindowUsage`, `contextTokensUsed`, `contextWindowTokens` |
-| Usage bar (credits) | Prefers weekly `%` from `GET /v1/billing?format=credits`; falls back to monthly `used/monthlyLimit` from `GET /v1/billing`. Auth from `~/.grok/auth.json`, cached ~60s |
+| Usage bar (credits) | Prefers weekly `%` from `GET /v1/billing?format=credits`; falls back to monthly `used/monthlyLimit` from `GET /v1/billing`. Still shows weekly window (`week ends`) when the API returns a WEEKLY period without a percent. Auth from `~/.grok/auth.json`, cached ~60s |
 | Duration, turns, tool count | `signals.json` |
 | Recent tools | tail of `updates.jsonl` |
 | Live / stale | `active_sessions.json` + process PID |
