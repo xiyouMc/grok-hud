@@ -11,7 +11,16 @@ Usage ██░░░░░░░░ 25% (3.7k/15k) (monthly) · monthly resets 
 ◐ run_terminal_command ls -la … | ✓ read_file ×3 | ✓ grep ×2
 ```
 
-## Install as a Grok plugin (recommended)
+## Install
+
+### npm (CLI)
+
+```bash
+npm install -g grok-hud
+grok-hud --watch
+```
+
+### Grok plugin
 
 ```bash
 # from GitHub
@@ -40,7 +49,7 @@ Validate the package:
 grok plugin validate .
 ```
 
-### CLI only (without plugin registry)
+### From source
 
 ```bash
 git clone git@github.com:xiyouMc/grok-hud.git
@@ -48,12 +57,6 @@ cd grok-hud
 npm install
 npm run build
 npm link          # optional: puts `grok-hud` on PATH
-```
-
-Or run the shipped binary:
-
-```bash
-node bin/grok-hud.js --watch
 ```
 
 ## Usage
@@ -70,6 +73,7 @@ node bin/grok-hud.js --watch
 | `grok-hud --cwd ~/dev/app` | Focus a project |
 | `grok-hud --session <id>` | Focus a session id |
 | `grok-hud --init-config` | Write default config |
+| `grok-hud --telemetry on\|off\|status` | Opt-in anonymous usage counts (default **off**) |
 
 ### Side-by-side with Grok
 
@@ -153,6 +157,43 @@ Useful keys:
 `lineLayout`: `"expanded"` | `"compact"`  
 `contextValue`: `"percent"` | `"tokens"` | `"remaining"` | `"both"`  
 `display.showUsage`: weekly credit bar from Grok billing API (disable to stay offline-only)
+
+### Telemetry (opt-in, default off)
+
+Anonymous install/start counts so maintainers can estimate adoption. **Off by default.**
+
+```bash
+grok-hud --telemetry on      # opt in
+grok-hud --telemetry status  # local id + public aggregates
+grok-hud --telemetry off     # opt out
+```
+
+Or in config:
+
+```json
+{
+  "telemetry": {
+    "enabled": false,
+    "endpoint": ""
+  }
+}
+```
+
+| Setting | Meaning |
+|---------|---------|
+| `enabled` | Must be `true` to send anything |
+| `endpoint` | Empty = built-in aggregate CounterAPI; or your own `POST` JSON URL |
+
+**What is sent (only when enabled):** package version, OS/arch, Node version, anonymous local `installId`, event type (`install` once / `start` at most once per UTC day).
+
+**What is never sent:** cwd, file paths, tokens, emails, prompts, session transcripts, billing details.
+
+Public aggregates (CounterAPI):
+
+- installs: `https://api.counterapi.dev/v1/xiyoumc/grok-hud-installs/`
+- starts: `https://api.counterapi.dev/v1/xiyoumc/grok-hud-starts/`
+
+npm download stats (after publish): https://www.npmjs.com/package/grok-hud
 
 ## How it works
 

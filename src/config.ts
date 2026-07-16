@@ -1,10 +1,12 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { DEFAULT_TELEMETRY, type TelemetryConfig } from './telemetry.js';
 
 export type LineLayoutType = 'compact' | 'expanded';
 export type ContextValueMode = 'percent' | 'tokens' | 'remaining' | 'both';
 export type Language = 'en' | 'zh';
+export type { TelemetryConfig };
 
 export type HudColorName =
   | 'dim'
@@ -67,6 +69,12 @@ export interface HudConfig {
     /** Cache TTL for billing API (ms). Avoid hammering the network in --watch. */
     cacheTtlMs: number;
   };
+  /**
+   * Anonymous opt-in telemetry (default OFF).
+   * When enabled, pings an aggregate counter at most once per install + once per day.
+   * Never sends cwd, tokens, prompts, or file paths.
+   */
+  telemetry: TelemetryConfig;
   colors: HudColorOverrides;
 }
 
@@ -105,6 +113,7 @@ export const DEFAULT_CONFIG: HudConfig = {
   usage: {
     cacheTtlMs: 60_000,
   },
+  telemetry: { ...DEFAULT_TELEMETRY },
   colors: {
     context: 'green',
     warning: 'yellow',
@@ -179,4 +188,24 @@ export function loadConfig(overrides: Partial<HudConfig> = {}): HudConfig {
 export function defaultConfigPath(grokHome?: string): string {
   const home = grokHome ?? path.join(os.homedir(), '.grok');
   return path.join(home, 'plugins', 'grok-hud', 'config.json');
+}
+
+/** Read-modify-write user config.json (creates defaults if missing). */
+export function updateUserConfig(
+  grokHome: string,
+  mutator: (cfg: Record<string, unknown>) => void,
+): string {
+  const file = defaultConfigPath(grokHome);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  let raw: Record<string, unknown> = {};
+  try {
+    if (fs.existsSync(file)) {
+      raw = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>;
+    }
+  } catch {
+    raw = {};
+  }
+  mutator(raw);
+  fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n', 'utf8');
+  return file;
 }

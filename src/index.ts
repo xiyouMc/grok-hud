@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { loadConfig, defaultConfigPath, type HudConfig } from './config.js';
+import { loadConfig, defaultConfigPath, updateUserConfig, type HudConfig } from './config.js';
 import { collectSnapshots } from './session.js';
 import { getCreditUsage } from './billing.js';
+import { maybePingTelemetry, setTelemetryEnabled, telemetryStatus } from './telemetry.js';
 import { setLanguage, t } from './i18n/index.js';
 import { render, renderJson, renderTmux, visualRowCount } from './render/index.js';
 import type { RenderContext } from './types.js';
@@ -23,6 +24,8 @@ export interface CliOptions {
   initConfig: boolean;
   help: boolean;
   version: boolean;
+  /** on | off | status */
+  telemetryCmd?: 'on' | 'off' | 'status';
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -83,6 +86,16 @@ function parseArgs(argv: string[]): CliOptions {
       case '--init-config':
         opts.initConfig = true;
         break;
+      case '--telemetry': {
+        const v = (argv[++i] ?? 'status').toLowerCase();
+        if (v === 'on' || v === 'off' || v === 'status') {
+          opts.telemetryCmd = v;
+        } else {
+          console.error(`Unknown --telemetry value: ${v} (use on|off|status)`);
+          opts.help = true;
+        }
+        break;
+      }
       case '-h':
       case '--help':
         opts.help = true;
@@ -122,6 +135,8 @@ Options:
   --interval, -n <ms>  Watch refresh interval
   --no-color           Disable ANSI colors
   --init-config        Write default config to ~/.grok/plugins/grok-hud/config.json
+  --telemetry on|off|status
+                       Opt-in anonymous usage pings (default off)
   --help, -h           Show help
   --version, -v        Show version
 
@@ -131,6 +146,8 @@ Examples:
   grok-hud --cwd ~/dev/app     # focus project
   grok-hud --tmux              # for tmux status-right
   grok-hud --json | jq         # script integration
+  grok-hud --telemetry on      # opt in to anonymous install/start counts
+  grok-hud --telemetry status  # local state + public aggregate counts
 
 Data sources:
   ~/.grok/active_sessions.json
@@ -211,7 +228,18 @@ function output(text: string, opts: CliOptions): void {
   process.stdout.write(text.endsWith('\n') ? text : text + '\n');
 }
 
+function fireTelemetry(config: HudConfig, mode: 'once' | 'watch' | 'tmux' | 'json'): void {
+  // Never block HUD on network; swallow errors inside maybePingTelemetry
+  void maybePingTelemetry({
+    grokHome: config.grokHome,
+    telemetry: config.telemetry ?? { enabled: false, endpoint: '' },
+    mode,
+  });
+}
+
 async function runOnce(config: HudConfig, opts: CliOptions): Promise<void> {
+  const mode = opts.json ? 'json' : opts.tmux ? 'tmux' : 'once';
+  fireTelemetry(config, mode);
   const ctx = await buildContext(config, opts);
   if (opts.json) {
     output(renderJson(ctx), opts);
@@ -225,6 +253,7 @@ async function runOnce(config: HudConfig, opts: CliOptions): Promise<void> {
 }
 
 async function runWatch(config: HudConfig, opts: CliOptions): Promise<void> {
+  fireTelemetry(config, 'watch');
   const interval = opts.refreshMs ?? config.refreshMs;
   let prevRows = 0;
   let inFlight = false;
@@ -336,7 +365,36 @@ async function main(): Promise<void> {
   }
 
   if (opts.version) {
-    console.log('0.1.4');
+    console.log('0.1.5');
+    return;
+  }
+
+  if (opts.telemetryCmd) {
+    if (opts.telemetryCmd === 'status') {
+      console.log(await telemetryStatus(config.grokHome, config.telemetry));
+      return;
+    }
+    const enabled = opts.telemetryCmd === 'on';
+    setTelemetryEnabled(config.grokHome, enabled);
+    const file = updateUserConfig(config.grokHome, (raw) => {
+      const prev =
+        raw.telemetry && typeof raw.telemetry === 'object'
+          ? (raw.telemetry as Record<string, unknown>)
+          : {};
+      raw.telemetry = { ...prev, enabled };
+    });
+    console.log(`Telemetry ${enabled ? 'enabled' : 'disabled'}.`);
+    console.log(`Updated: ${file}`);
+    if (enabled) {
+      console.log(
+        'Anonymous install/start counts only (no paths/tokens/prompts). Run with --telemetry status to inspect.',
+      );
+      // Immediate first ping so status shows quickly
+      fireTelemetry({ ...config, telemetry: { ...config.telemetry, enabled: true } }, 'once');
+      // Give the ping a moment before exit
+      await new Promise((r) => setTimeout(r, 800));
+      console.log(await telemetryStatus(config.grokHome, { ...config.telemetry, enabled: true }));
+    }
     return;
   }
 

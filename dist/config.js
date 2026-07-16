@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { DEFAULT_TELEMETRY } from './telemetry.js';
 export const DEFAULT_CONFIG = {
     language: 'en',
     lineLayout: 'expanded',
@@ -36,6 +37,7 @@ export const DEFAULT_CONFIG = {
     usage: {
         cacheTtlMs: 60_000,
     },
+    telemetry: { ...DEFAULT_TELEMETRY },
     colors: {
         context: 'green',
         warning: 'yellow',
@@ -101,5 +103,22 @@ export function loadConfig(overrides = {}) {
 export function defaultConfigPath(grokHome) {
     const home = grokHome ?? path.join(os.homedir(), '.grok');
     return path.join(home, 'plugins', 'grok-hud', 'config.json');
+}
+/** Read-modify-write user config.json (creates defaults if missing). */
+export function updateUserConfig(grokHome, mutator) {
+    const file = defaultConfigPath(grokHome);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    let raw = {};
+    try {
+        if (fs.existsSync(file)) {
+            raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+        }
+    }
+    catch {
+        raw = {};
+    }
+    mutator(raw);
+    fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n', 'utf8');
+    return file;
 }
 //# sourceMappingURL=config.js.map

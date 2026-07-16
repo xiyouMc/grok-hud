@@ -1,7 +1,7 @@
 {
   "name": "grok-hud",
-  "version": "0.1.4",
-  "description": "Real-time statusline HUD for Grok (xAI CLI) — inspired by claude-hud",
+  "version": "0.1.5",
+  "description": "Real-time statusline HUD for Grok (xAI CLI) — context, git, tools, and credit usage (inspired by claude-hud)",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -15,7 +15,9 @@
     "plugin.json",
     ".grok-plugin/",
     "config.example.json",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "grok-hud-preview.png"
   ],
   "scripts": {
     "build": "tsc",
@@ -24,6 +26,7 @@
     "watch": "node dist/index.js --watch",
     "test:once": "node dist/index.js --once",
     "prepare": "tsc",
+    "prepublishOnly": "npm run build",
     "plugin:validate": "grok plugin validate ."
   },
   "keywords": [
@@ -32,10 +35,22 @@
     "statusline",
     "hud",
     "cli",
-    "plugin"
+    "plugin",
+    "telemetry"
   ],
   "author": "xiyoumc",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiyouMc/grok-hud.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xiyouMc/grok-hud/issues"
+  },
+  "homepage": "https://github.com/xiyouMc/grok-hud#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18.0.0"
   },

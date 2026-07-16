@@ -14,5 +14,7 @@ export interface CliOptions {
     initConfig: boolean;
     help: boolean;
     version: boolean;
+    /** on | off | status */
+    telemetryCmd?: 'on' | 'off' | 'status';
 }
 //# sourceMappingURL=index.d.ts.map

@@ -1,5 +1,5 @@
 {
-  "language": "zh",
+  "language": "en",
   "lineLayout": "expanded",
   "pathLevels": 2,
   "refreshMs": 1000,
@@ -31,6 +31,10 @@
   },
   "usage": {
     "cacheTtlMs": 60000
+  },
+  "telemetry": {
+    "enabled": false,
+    "endpoint": ""
   },
   "colors": {
     "context": "green",
