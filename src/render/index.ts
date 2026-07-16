@@ -249,10 +249,23 @@ function renderUsageLine(ctx: RenderContext): string | null {
           ? dim(` · ${t('label.resets')} ${primaryReset}`)
           : '';
 
-  // Weekly window metadata (even when bar is monthly and weekly % is gone)
+  // When bar is weekly but we also have monthly absolute, append monthly snapshot
+  let monthlySidePart = '';
+  if (
+    usage.metric === 'weekly_percent' &&
+    typeof usage.used === 'number' &&
+    typeof usage.limit === 'number' &&
+    usage.limit > 0
+  ) {
+    const mPct = Math.round((usage.used / usage.limit) * 100);
+    monthlySidePart = dim(
+      ` · ${t('label.monthly')} ${mPct}% (${formatCreditAmount(usage.used)}/${formatCreditAmount(usage.limit)})`,
+    );
+  }
+
+  // Weekly window metadata (when bar is monthly and weekly % is gone)
   let weekPart = '';
   if (usage.weekEnd) {
-    // Avoid duplicating when the primary metric is already the weekly period
     const weekIsPrimary =
       usage.metric === 'weekly_percent' ||
       (usage.periodType === 'weekly' && usage.periodEnd === usage.weekEnd);
@@ -264,7 +277,7 @@ function renderUsageLine(ctx: RenderContext): string | null {
     }
   }
 
-  return `${usageLabel}${barStr} ${pctStr}${periodPart}${primaryResetPart}${weekPart}`;
+  return `${usageLabel}${barStr} ${pctStr}${periodPart}${primaryResetPart}${monthlySidePart}${weekPart}`;
 }
 
 function renderToolsLine(snap: SessionSnapshot, ctx: RenderContext): string | null {
